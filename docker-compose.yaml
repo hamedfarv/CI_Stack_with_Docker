@@ -1,0 +1,54 @@
+version: "3.8"
+services: 
+  website:
+    build: 
+      context: .
+    ports: 
+      - 80:80
+  jenkins:
+    build: 
+      context: .
+      dockerfile: jenkins.Dockerfile
+    volumes: 
+    - /tmp/jenkins_home:/var/jenkins_home
+    - $PWD:/app
+    ports: 
+      - 8080:8080
+    user: root
+  aws:
+    image: anigeo/awscli
+    volumes: 
+      - $PWD:/app
+    working_dir: /app
+    environment: 
+      AWS_ACCESS_KEY_ID: 
+      AWS_SECRET_ACCESS_KEY: 
+      AWS_REGION: eu-west-2
+  terraform:
+    build: 
+      context: .
+      dockerfile: terra.Dockerfile
+    environment: 
+      AWS_ACCESS_KEY_ID: 
+      AWS_SECRET_ACCESS_KEY: 
+      AWS_REGION: eu-west-2
+    volumes:
+      - $PWD:/app
+    working_dir: /app
+  selenium:
+    image: selenium/standalone-firefox-debug
+    ports:
+      - 4444:4444
+      - 5900:5900
+  unit-test:
+    build:
+      context: .
+      dockerfile: rspec.Dockerfile
+    environment:
+      SELENIUM_HOST: selenium
+      SELENIUM_PORT: 4444
+    volumes:
+      - $PWD:/app
+    command:
+      - --pattern
+      - /app/rspec/unit-test/*_spec.rb
